@@ -1,11 +1,78 @@
+/*import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
+
+const schema = a.schema({
+  BedrockResponse: a.customType({
+    body: a.string(),
+    error: a.string(),
+  }),
+
+  askBedrock: a
+    .query()
+    .arguments({ ingredients: a.string().array() })
+    .returns(a.ref("BedrockResponse"))
+    .authorization((allow) => [allow.authenticated()])
+    .handler(
+      //sets up a custom handler for this query, defined in bedrock.js, using bedrockDS as its data source.
+      a.handler.custom({ entry: "./bedrock.js", dataSource: "bedrockDS" })
+    ),
+});
+
+export type Schema = ClientSchema<typeof schema>;
+
+export const data = defineData({
+  schema,
+  authorizationModes: {
+    defaultAuthorizationMode: "apiKey",
+    apiKeyAuthorizationMode: {
+      expiresInDays: 30,
+    },
+  },
+});
+*/
+
+
+
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 
-/*== STEP 1 ===============================================================
+const schema = a.schema({
+  Note: a
+    .model({
+      name:a.string(),
+      description: a.string(),
+      image: a.string(),
+    })
+    .authorization((allow) => [allow.owner()]),
+});
+
+export type Schema = ClientSchema<typeof schema>;
+
+export const data = defineData({
+  schema,
+  authorizationModes: {
+    defaultAuthorizationMode: 'userPool',
+  },
+});
+
+
+
+
+
+
+
+
+
+/*
+import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
+
+/*
+== STEP 1 ===============================================================
 The section below creates a Todo database table with a "content" field. Try
 adding a new "isDone" field as a boolean. The authorization rule below
 specifies that any unauthenticated user can "create", "read", "update", 
 and "delete" any "Todo" records.
 =========================================================================*/
+
+/*
 const schema = a.schema({
   Todo: a
     .model({
@@ -22,6 +89,7 @@ export const data = defineData({
     defaultAuthorizationMode: 'iam',
   },
 });
+
 
 /*== STEP 2 ===============================================================
 Go to your frontend source code. From your client-side code, generate a
@@ -51,3 +119,5 @@ Fetch records from the database and use them in your frontend component.
 // const { data: todos } = await client.models.Todo.list()
 
 // return <ul>{todos.map(todo => <li key={todo.id}>{todo.content}</li>)}</ul>
+
+
