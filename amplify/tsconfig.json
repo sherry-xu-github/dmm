@@ -13,8 +13,5 @@
         "../.amplify/generated/*"
       ]
     }
-  },
-  "include": [
-    "amplify/**/*"
-  ]
+  }
 }
