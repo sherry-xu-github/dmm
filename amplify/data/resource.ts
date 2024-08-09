@@ -35,13 +35,21 @@ export const data = defineData({
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 
 const schema = a.schema({
+  /*
+  MemoryTag: a.model({
+    })
+  */
   Note: a
     .model({
-      name:a.string(),
+      name: a.string(),
       description: a.string(),
       image: a.string(),
+      // amplify auto adds an "owner: a.string()" field that contains the owner's identity info upon note creation to each note
     })
     .authorization((allow) => [allow.owner()]),
+    // allow.owner(): a per-owner auth rule that restrics the note's access to the owner of the note
+    
+
 });
 
 export type Schema = ClientSchema<typeof schema>;
