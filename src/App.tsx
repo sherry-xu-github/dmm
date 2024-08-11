@@ -1,4 +1,4 @@
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, FormEvent, memo } from "react";
 import {
   Authenticator,
   Button,
@@ -10,6 +10,9 @@ import {
   Image,
   Grid,
   Divider,
+  Badge,
+  Autocomplete,
+  ComboBoxOption,
 } from "@aws-amplify/ui-react";
 import { Amplify } from "aws-amplify";
 import { Schema } from "../amplify/data/resource";
@@ -26,21 +29,126 @@ const client = generateClient<Schema>({
 });
 
 interface Note {
-  id: string;
+  id: string | null;
   name: string | null;
   description: string | null;
   image?: string | null;
   owner: string | null;
-  createdAt: string;
+  createdAt: string | null;
   updatedAt: string;
+  tag: string | null;
+  tags: Array<string | null> | null;
 }
 
 export default function App() {
   const [notes, setNotes] = useState<Note[]>([]);
+  const [taggedNotes, setTaggedNotes] = useState<Note[] | null>(null);
+  
+  const [error, setError] = useState<string | null>(null);
+
+  const [hasMemoryNameError, setHasMemoryNameError] = useState(false)
+  const [memoryName, setMemoryName] = useState('');
+
+  const [currentNote, setCurrentNote] = useState<Note | null>(null);
+
+  //const options = [{"id":"apple","label":"apple"},{"id":"banana","label":"banana"},{"id":"cherry","label":"cherry"},{"id":"grape","label":"grape"},{"id":"kiwis","label":"kiwis"},{"id":"lemon","label":"lemon"},{"id":"mango","label":"mango"},{"id":"orange","label":"orange"},{"id":"strawberry","label":"strawberry"}]
+  const options = notes.map( (note) => {
+    return {"id": note.name, "label": note.name}
+  } )
+  
+  const [value, setValue] = useState('');
+
+  const onChange = (event: any) => {
+    setValue(event.target.value);
+  };
+
+  
+  const onSelect = async(option: any) => {
+    const { label } = option;
+    setValue(label);
+    console.log(label);
+
+    const dNotes = await getNotesByName(label);
+    for (const cN of dNotes){
+      console.log(cN);
+      if (cN.tags){
+        console.log(cN);
+        if (cN.image) {
+          const linkToStorageFile = await getUrl({
+            path: ({ identityId }) => `media/${identityId}/${cN.image}`,
+          });
+          console.log(linkToStorageFile.url);
+          cN.image = (linkToStorageFile.url).toString();
+        }
+        setCurrentNote(cN);
+      }
+    }
+    
+  };
+
+  const onClear = () => {
+    setValue('');
+    setCurrentNote(null);
+
+  };
+
 
   useEffect(() => {
     fetchNotes();
   }, []);
+
+  async function fetchTags() {
+    //const { data: fetchedNotes } = await client.models.Note.
+  }
+  
+  async function fetchTaggedNotes() {
+    try{
+      const { data, errors } = 
+      await client.models.Note.listNoteByTagAndName({
+        tag: "yay",
+        name: {
+          beginsWith: "8"
+        }
+      });
+
+      console.log(data);
+      if (errors) {
+        console.log(errors);
+        setError("Error fetching tagged notes");
+      }
+      else{
+        setTaggedNotes(data);
+      }
+    }
+    catch (err) {
+      console.error(err)
+      setError("Caught other error fetching tagged notes")
+    }
+  }
+
+  async function checkMemoryName() {
+    try{
+      const {data, errors} = 
+      await client.models.Note.listNoteByNameAndCreatedAt({
+        name: memoryName,
+      })
+
+      console.log(data);
+      if (errors) {
+        console.log(errors);
+        setError("Error fetching named notes");
+      }
+      else{
+        console.log(data.length > 0)
+        setHasMemoryNameError(data.length > 0)
+        return data.length > 0
+      }
+    }
+    catch (err) {
+      console.error(err)
+      setError("Caught other error fetching named notes")
+    }
+  }  
 
   async function fetchNotes() {
     const { data: fetchedNotes } = await client.models.Note.list();
@@ -56,50 +164,119 @@ export default function App() {
         return note;
       })
     );
-    console.log(updatedNotes);
-    setNotes(updatedNotes);
+    
+    const filteredNotes = updatedNotes.filter(note => 
+      note.description && note.description.trim() !== ''
+    );
+    
+    console.log(filteredNotes);
+    setNotes(filteredNotes);
   }
 
   async function createNote(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const cT = event.currentTarget;
+    const form = new FormData(cT);
+    
+    console.log(event.currentTarget)
+
     const imageName = (form.get("image") as File)?.name
     console.log(imageName);
 
-    const result = await client.models.Note.create({
-      name: form.get("name") as string,
-      description: form.get("description") as string,
-      image: imageName,
-    });
+    const err = await checkMemoryName();
 
-    
-    if (result.data) {
-      const newNote = result.data;
-      console.log(newNote);
-      if (newNote.image){
-        await uploadData({
-          path: ({ identityId }) => `media/${identityId}/${newNote.image}`,
-          data: form.get("image") as File,
-        }).result;
+
+    console.log(event.currentTarget)
+
+    //if (! hasMemoryNameError && ! err){
+    if (! hasMemoryNameError && ! err){
+
+      
+      const tags = (form.get("tags") as string).split(",")
+      
+      if (tags){
+        //console.log(tags)
+        for (const currentTag of tags){
+          //console.log(currentTag)
+          const taggedResult = await client.models.Note.create({
+            tag: currentTag,
+            name: form.get("name") as string
+          });
+          //console.log(taggedResult)
+        }
       }
+
+      const result = await client.models.Note.create({
+        name: form.get("name") as string,
+        description: form.get("description") as string,
+        image: imageName,
+        tags: tags,
+      });
+
+      if (result.data) {
+        const newNote = result.data;
+        console.log(newNote);
+        if (newNote.image){
+          await uploadData({
+            path: ({ identityId }) => `media/${identityId}/${newNote.image}`,
+            data: form.get("image") as File,
+          }).result;
+        }
+      }
+    
+      fetchNotes();
+      //event.currentTarget.reset();
+      cT.reset();
+      
     }
     
-
-    fetchNotes();
-    event.currentTarget.reset();
   }
 
-  async function deleteNote({ id }: {id: string}) {
-    const toBeDeletedNote = {
-      id: id,
-    };
+  async function getNotesByName(noteName: string) {
+    console.log(noteName)
+    const { data, errors } = 
+      await client.models.Note.listNoteByNameAndCreatedAt({
+        name: noteName,
+      });
+      console.log(data);
 
-    const { data: deletedNote } = await client.models.Note.delete(
-      toBeDeletedNote
-    );
-    console.log(deletedNote);
+      const dNotes = await Promise.all(
+        data.map(async (note) => note)
+      )
+    console.log(dNotes)
 
+    if (errors) {
+      console.log(errors);
+      setError("Error fetching named notes");
+    }
+    return dNotes
+  }
+
+  async function deleteNotes(noteName: string) {
+    console.log("deleting")
+    try{
+      const dNotes = await getNotesByName(noteName);
+      
+      //console.log(typeof(data[0]))
+      //console.log(typeof(data))
+      for (const currentDelete of dNotes){
+        const toBeDeletedNote = {
+          id: currentDelete.id as string,
+        };
+    
+        const { data: deletedNote } = await client.models.Note.delete(
+          toBeDeletedNote
+        );
+        console.log(deletedNote);
+      }
+    }
+    catch (err) {
+      console.error(err)
+      setError("Caught other error fetching named notes")
+    }
+    
     fetchNotes();
+    checkMemoryName();
   }
 
   return (
@@ -112,8 +289,9 @@ export default function App() {
           direction="column"
           width="70%"
           margin="0 auto"
+          color="gray"
         >
-          <Heading level={1}>My Memories</Heading>
+          <Heading level={1}>New Memory</Heading>
           <View as="form" margin="3rem 0" onSubmit={createNote}>
             <Flex
               direction="column"
@@ -128,11 +306,24 @@ export default function App() {
                 labelHidden
                 variation="quiet"
                 required
+                onChange={(e) => setMemoryName(e.target.value)}
+                onBlur={checkMemoryName}
+                hasError={hasMemoryNameError}
+                errorMessage="This Memory Name has been used"
+                
               />
               <TextField
                 name="description"
                 placeholder="Memory Description"
                 label="Memory Description"
+                labelHidden
+                variation="quiet"
+                required
+              />
+              <TextField
+                name="tags"
+                placeholder="Memory Tags"
+                label="Memory Tags"
                 labelHidden
                 variation="quiet"
                 required
@@ -151,12 +342,12 @@ export default function App() {
             </Flex>
           </View>
           <Divider />
-          <Heading level={2}>Current Memories</Heading>
+          <Heading level={1}>My Memories</Heading>
           <Grid
-            margin="3rem 0"
+            margin="2rem 0"
             autoFlow="column"
             justifyContent="center"
-            gap="2rem"
+            gap="1rem"
             alignContent="center"
           >
             {notes.map((note) => (
@@ -171,9 +362,7 @@ export default function App() {
                 borderRadius="5%"
                 className="box"
               >
-                <View>
-                  <Heading level={3}>{note.name}</Heading>
-                </View>
+                <Heading level={4}>{note.name}</Heading>
                 <Text fontStyle="italic">{note.description}</Text>
                 {note.image && (
                   <Image
@@ -182,14 +371,87 @@ export default function App() {
                     style={{ width: 400 }}
                   />
                 )}
+                
+                <div>
+                  {note.tags?.map((tag, index) => (
+                    <Badge key={index}>{tag}</Badge>
+                  ))}
+                </div>
+                
                 <Button
-                  variation="destructive"
-                  onClick={() => deleteNote(note)}
+                  variation="primary"
                 >
-                  Delete memory
+                  Edit
                 </Button>
               </Flex>
             ))}
+          </Grid>
+          <Divider></Divider>
+          <Heading level={1}>Edit Memory</Heading>
+          
+          <Flex
+            direction="column"
+            justifyContent="center"
+            gap="2rem"
+            padding="2rem"
+          >
+            <Autocomplete
+            label="Select a Memory"
+            options={options as ComboBoxOption[]}
+            value={value}
+            onChange={onChange}
+            onClear={onClear}
+            onSelect={onSelect}
+            placeholder="Search here to start"  
+            />
+
+          </Flex>
+          
+          
+          <Grid
+            margin="2rem 0"
+            autoFlow="row"
+            justifyContent="center"
+            gap="1rem"
+            alignContent="center"
+          >
+            
+
+            {currentNote ? <Flex
+              key={currentNote.id || currentNote.name}
+              direction="column"
+              justifyContent="center"
+              alignItems="center"
+              gap="2rem"
+              border="1px solid #ccc"
+              padding="2rem"
+              borderRadius="5%"
+              className="box"
+            >
+              <Heading level={4}>{currentNote.name}</Heading>
+              <Text fontStyle="italic">{currentNote.description}</Text>
+              {currentNote.image && (
+                <Image
+                  src={currentNote.image}
+                  alt={`visual aid for ${currentNote.name}`}
+                  style={{ width: 400 }}
+                />
+              )}
+              
+              <div>
+                {currentNote.tags?.map((tag, index) => (
+                  <Button key={index}>{tag}</Button>
+                ))}
+              </div>
+              
+              <Button
+                variation="destructive"
+                onClick={() => deleteNotes(currentNote.name as string) }
+              >
+                Delete
+              </Button>
+              
+            </Flex> : <Text></Text>}
           </Grid>
           <Button onClick={signOut}>Sign Out</Button>
         </Flex>

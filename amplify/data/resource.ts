@@ -44,8 +44,17 @@ const schema = a.schema({
       name: a.string(),
       description: a.string(),
       image: a.string(),
+      tags: a.string().array(),
+      tag: a.string(),
+      createdAt: a.string(),
       // amplify auto adds an "owner: a.string()" field that contains the owner's identity info upon note creation to each note
     })
+
+    .secondaryIndexes((index) => [
+      index("tag").sortKeys(["name"]),
+      index("name").sortKeys(["createdAt"])
+    ])
+
     .authorization((allow) => [allow.owner()]),
     // allow.owner(): a per-owner auth rule that restrics the note's access to the owner of the note
     
