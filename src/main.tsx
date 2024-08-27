@@ -1,13 +1,43 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Authenticator, View, Image } from '@aws-amplify/ui-react';
+import App from './App.tsx';
 import './index.css'
-import { Authenticator } from "@aws-amplify/ui-react";
+import '@aws-amplify/ui-react/styles.css';
+import logo from './assets/MemoryCellar.png';
+
+
+import {MemoryUpload} from './components/MemoryUpload';
+import {MemoryGallery} from './components/MemoryGallery';
+import {MemoryItem} from './components/MemoryItem';
+import EditMemoryPage from './components/EditMemory.tsx';
+
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <Authenticator>
-      <App />
+    <Authenticator
+      components={{
+        Header() {
+          return (
+            <View textAlign="center" padding="large">
+              <Image src={logo} alt="MemoryCellar Logo" className="logo" />
+            </View>
+          );
+        }
+      }}
+    >
+      
+      <Router>
+        <Routes>
+          <Route path="/" element={<App />}>
+            <Route path="/create" element={<MemoryUpload />} />
+            <Route path="/gallery" element={<MemoryGallery />} />
+            <Route path="/edit/:id" element={<EditMemoryPage />} />
+            <Route path="/item" element={<MemoryItem />} />
+          </Route>
+        </Routes>
+      </Router>
     </Authenticator>
-  </React.StrictMode>,
-)
+  </React.StrictMode>
+);
