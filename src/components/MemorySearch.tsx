@@ -1,18 +1,21 @@
-import { Grid, Flex, Heading, Text, Button, Image, Badge, View, useTheme, Pagination } from "@aws-amplify/ui-react";
+import { Grid, Flex, Heading, Text, Button, Image, Badge, View, useTheme, SearchField } from "@aws-amplify/ui-react";
 import { useMemoryUpload, useMemoryAutoComplete } from "../services/memoryService";
 import { MemoryModal } from "../components/MemoryModal";
+import { useMemorySearch } from "../services/memoryService";
 import logo from './../assets/MemoryCellar.png';
-import { useMediaQuery } from 'react-responsive';
-import * as React from 'react';
 
 import { useMemoryContext } from "../context/MemoryContext";
+import { useState, useEffect, FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 
-export const MemoryGallery = () => {
+export const MemorySearch = () => {
   const {
     memories,
     isModalOpen,
     setIsModalOpen,
-    currentMemory
+    currentMemory,
+    searchString
+    
     
   } = useMemoryContext();
 
@@ -21,6 +24,13 @@ export const MemoryGallery = () => {
     handleImageClick,
     closeModal
   } = useMemoryAutoComplete();
+
+
+  const {
+    handleSearch,
+    onChange,
+    onClear
+  } = useMemorySearch();  
 
   /*
   const isLargeScreen = useMediaQuery({ query: '(min-width: 1024px)' });
@@ -40,12 +50,22 @@ export const MemoryGallery = () => {
       color="gray"
     >
       <img src={logo} alt="logo" />      
+      <SearchField
+          label="search"
+          onChange={onChange}
+          onClear={onClear}
+          value={searchString}
+          padding="2em"
+          placeholder="Search my memories"
+          onSubmit={handleSearch}
+        />
       <Grid 
         templateColumns="repeat(auto-fit, minmax(150px, 1fr))"
         autoRows="minmax(100px, auto)"
         gap={tokens.space.small}
         padding="2em"
       >
+        
         {memories.map((memory) => (
           <View 
             key={memory.id || memory.name}

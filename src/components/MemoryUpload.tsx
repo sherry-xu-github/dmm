@@ -1,21 +1,26 @@
-import { TextField, Button, Flex, View } from "@aws-amplify/ui-react";
+import { Button, Flex, View, DropZone, VisuallyHidden, Text, Loader, Message } from "@aws-amplify/ui-react";
 import { useMemoryUpload } from "../services/memoryService";
 import logo from './../assets/MemoryCellar.png';
 import { useMemoryContext } from "../context/MemoryContext";
+import * as React from 'react';
 
 export const MemoryUpload = () => {
-  
-  const { 
-    hasMemoryNameError,
-    checkMemoryName,
-    createNote,
+  const {
+    handleSubmit,
+    onFilePickerChange
   } = useMemoryUpload();
 
-
-  const {
-    setMemoryName,
-  } = useMemoryContext();
   
+  const {
+    files,
+    setFiles,
+    percentage
+  } = useMemoryContext();
+
+
+
+  const acceptedFileTypes = ['image/png', 'image/jpeg'];
+  const hiddenInput = React.useRef(null);
 
 
   return (
@@ -31,28 +36,56 @@ export const MemoryUpload = () => {
         
         <img src={logo} alt="logo" />
         
-        <View as="form" onSubmit={createNote}>
+        <View as="form" onSubmit={handleSubmit(files)}>
         <Flex direction="column" justifyContent="center" gap="2rem" padding="2rem">
-            <TextField
-            name="name"
-            placeholder="Memory Name"
-            label="Memory Name"
-            labelHidden
-            variation="quiet"
-            required
-            onChange={(e) => setMemoryName(e.target.value)}
-            onBlur={() => checkMemoryName()}
-            hasError={hasMemoryNameError}
-            errorMessage="This Memory Name has been used"
-            />
-            <TextField name="description" placeholder="Memory Description" label="Memory Description" labelHidden variation="quiet" required />
-            <TextField name="tags" placeholder="Memory Tags" label="Memory Tags" labelHidden variation="quiet" required />
-            <View name="image" as="input" type="file" alignSelf="end" accept="image/png, image/jpeg" />
+            
+            <DropZone
+              acceptedFileTypes={acceptedFileTypes}
+              onDropComplete={({ acceptedFiles, rejectedFiles }) => {
+                setFiles(acceptedFiles);
+              }}
+            >
+              <Flex direction="column" alignItems="center">
+                <Text>Drag images here or</Text>
+                <Button size="small" onClick={() => hiddenInput.current.click()}>
+                  Browse
+                </Button>
+              </Flex>
+
+              <VisuallyHidden>
+                <input
+                  name="image"
+                  type="file"
+                  tabIndex={-1}
+                  ref={hiddenInput}
+                  onChange={onFilePickerChange}
+                  multiple={true}
+                  accept={acceptedFileTypes.join(',')}
+                />
+              </VisuallyHidden>
+
+            </DropZone>
+
+            
+
+            <Flex direction="column" justifyContent="center">
+              {files.map((file) => (
+                <Text fontSize="0.8em" key={file.name}>{file.name}</Text>
+              ))}
+            </Flex>
+            
+            {percentage > 0 && percentage < 100 && <Loader variation="linear" percentage={percentage} isDeterminate isPercentageTextHidden/>}
+            {percentage === 100 && <Message colorTheme="success">Upload complete!</Message>}
+
             <Button type="submit" variation="primary">
-            Create Memory
+              Create Memory
             </Button>
+
+            
         </Flex>
+
         </View>
+        
     </Flex>
   );
 };

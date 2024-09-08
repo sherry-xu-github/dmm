@@ -10,7 +10,8 @@ import logo from './assets/MemoryCellar.png';
 
 import {MemoryUpload} from './components/MemoryUpload';
 import {MemoryGallery} from './components/MemoryGallery';
-import {MemoryItem} from './components/MemoryItem';
+//import {MemoryItem} from './components/MemoryItem';
+import {MemorySearch} from './components/MemorySearch';
 import EditMemoryPage from './components/EditMemory.tsx';
 
 
@@ -33,8 +34,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="/" element={<App />}>
             <Route path="/create" element={<MemoryUpload />} />
             <Route path="/gallery" element={<MemoryGallery />} />
+            <Route path="/search" element={<MemorySearch />} />
             <Route path="/edit/:id" element={<EditMemoryPage />} />
-            <Route path="/item" element={<MemoryItem />} />
           </Route>
         </Routes>
       </Router>

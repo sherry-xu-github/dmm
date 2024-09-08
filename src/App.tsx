@@ -15,6 +15,8 @@ Amplify.configure({
 });
 
 export default function App() {
+  
+
   return (
     <Authenticator>
     {({ signOut }) => (
@@ -22,34 +24,34 @@ export default function App() {
         <MemoryProvider>
 
         
-        <Flex
-          //as="nav"
-          //direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          padding="0.5rem"
-          //backgroundColor="var(--amplify-colors-blue-80)"
-        >
-          <Menu
-            menuAlign="start"
+          <Flex
+            //as="nav"
+            //direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            padding="0.5rem"
+            //backgroundColor="var(--amplify-colors-blue-80)"
           >
-            <Link to="/create">
-              <Button variation="link">Create</Button>
-            </Link>
-            <Link to="/gallery">
-                <Button variation="link">Gallery</Button>
-            </Link>
-            <Link to="/item">
-                <Button variation="link">Item</Button>
-            </Link>
-            <Link to="/profile">
-                <Button variation="link">Profile</Button>
-            </Link>
-            <Button onClick={signOut}>Sign Out</Button>
-          </Menu>
+            <Menu
+              menuAlign="start"
+            >
+              
+              <Button variation="link" as={Link} to="/create">Create</Button>
+            
+            
+              <Button variation="link" as={Link} to="/gallery">Gallery</Button>
+            
+            
+              <Button variation="link" as={Link} to="/search">Search</Button>
+            
+            
+              <Button variation="link" as={Link} to="/profile">Profile</Button>
+            
+              <Button onClick={signOut}>Sign Out</Button>
+            </Menu>
 
-        </Flex>
-        <Outlet />
+          </Flex>
+          <Outlet />
 
         </MemoryProvider>
 

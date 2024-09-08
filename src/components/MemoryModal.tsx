@@ -1,14 +1,9 @@
-import { Flex, TextField, Button, CheckboxField, Grid } from "@aws-amplify/ui-react";
+import { Flex, TextField, Button, CheckboxField, Grid, Menu, Message } from "@aws-amplify/ui-react";
 import { useMemoryAutoComplete, useMemoryUpload } from "../services/memoryService";
-
-
-import logo from './../assets/MemoryCellar.png';
 import { useMemoryContext } from "../context/MemoryContext";
-import { MemoryAutocomplete } from "./MemoryAutocomplete";
-//import { useMemoryUpload } from "../hooks/useMemoryUpload";
 
 interface MemoryModalProps {
-  currentMemory: Note;
+  currentMemory: Memory;
   isOpen: boolean;
   onClose: () => void;
   
@@ -26,13 +21,13 @@ export const MemoryModal = ({isOpen, onClose, currentMemory}) => {
     //currentMemory,
     setNewTags,
     tagList,
+    updateSuccess,
+    error
   } = useMemoryContext();
-  const { updateMemory, addTag, handleTagChange } = useMemoryUpload(currentMemory);
-  const { handleImageClick, closeModal } = useMemoryAutoComplete();
-  
 
+  const { updateMemory, addTag, deleteNotes, handleTagChange } = useMemoryUpload(currentMemory);
+  const { handleImageClick, closeModal, onChange } = useMemoryAutoComplete();
   
-
   
   return (
     <>
@@ -51,6 +46,7 @@ export const MemoryModal = ({isOpen, onClose, currentMemory}) => {
       //borderRadius="5%"
       justifyContent="center"
     >
+      
       <Grid
         margin="2rem 0"
         autoFlow="column"
@@ -84,8 +80,11 @@ export const MemoryModal = ({isOpen, onClose, currentMemory}) => {
           //padding="20px"
           //className="modal-sidebar"
         >
-          <TextField name="name" label="Memory Name" value={currentMemory.name} required />
-          <TextField name="description" label="Memory Description" defaultValue={currentMemory.description} required />
+          <TextField name="name" label="Memory Name" defaultValue={currentMemory.name} onChange={onChange}/>
+          <TextField name="description" label="Memory Description" defaultValue={currentMemory.description} onChange={onChange}/>
+          <TextField name="locationLat" label="Memory Location - Latitude" defaultValue={currentMemory.location.lat} onChange={onChange}/>
+          <TextField name="locationLong" label="Memory Location - Longtitude" defaultValue={currentMemory.location.long} onChange={onChange}/>
+          <TextField name="dateTaken" label="Memory Date Taken" defaultValue={currentMemory.dateTaken} onChange={onChange}/>
           <TextField name="newTag" label="Memory Tags"
           placeholder="New Tag(s)" 
           labelHidden 
@@ -98,6 +97,18 @@ export const MemoryModal = ({isOpen, onClose, currentMemory}) => {
 
 
           <Button variation="primary" type="submit">Submit Changes</Button>
+
+          
+          <Menu
+            menuAlign="center"
+            size="small"
+          >
+            <Button variation="destructive" onClick={() => deleteNotes(currentMemory.id)}>Delete</Button>
+          </Menu>
+
+          {updateSuccess && <Message colorTheme="success">Succesfully updated!</Message>}
+          {error && <Message colorTheme="error">An error occured when updating the Memory</Message>}
+
 
         </Grid>
 

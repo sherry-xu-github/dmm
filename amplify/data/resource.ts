@@ -35,30 +35,42 @@ export const data = defineData({
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 
 const schema = a.schema({
-  /*
-  MemoryTag: a.model({
-    })
-  */
-  Note: a
-    .model({
-      name: a.string(),
-      description: a.string(),
-      image: a.string(),
-      tags: a.string().array(),
-      tag: a.string(),
-      createdAt: a.string(),
-      // amplify auto adds an "owner: a.string()" field that contains the owner's identity info upon note creation to each note
-    })
+  Location: a.customType({
+    lat: a.float(),
+    long: a.float(),
+  }),
 
-    .secondaryIndexes((index) => [
-      index("tag").sortKeys(["name"]),
-      index("name").sortKeys(["createdAt"])
-    ])
+  Memory: a.model({
+    id: a.id(),
 
-    .authorization((allow) => [allow.owner()]),
-    // allow.owner(): a per-owner auth rule that restrics the note's access to the owner of the note
+    name: a.string(),
+    description: a.string(),
+    tags: a.string().array(),
+
+    image: a.string(),
     
+    
+    createdAt: a.string(),
+    updatedAt: a.string(),
+    dateTaken: a.string(),
+    
+    location: a.ref('Location'),
+    
+    // search patterns
+    tag: a.string(),
+    year: a.integer(),
+    month: a.string()
 
+    //11/12/2017, 4:24:00 PM 40.778950, -73.962053
+    // amplify auto adds an "owner: a.string()" field that contains the owner's identity info upon note creation to each note
+  })
+  .secondaryIndexes((index) => [
+    index("tag"),
+    index("tag").sortKeys(["name", "description", "dateTaken"]),
+    index("year"),
+  ])
+  .authorization((allow) => [allow.owner()]),
+  // allow.owner(): a per-owner auth rule that restrics the memory's access to the owner of the note
 });
 
 export type Schema = ClientSchema<typeof schema>;
