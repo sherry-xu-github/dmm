@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Authenticator, View, Image } from '@aws-amplify/ui-react';
 import App from './App.tsx';
 import './index.css'
@@ -32,6 +32,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <Router>
         <Routes>
           <Route path="/" element={<App />}>
+            <Route index element={<Navigate to="/create" replace />} />
             <Route path="/create" element={<MemoryUpload />} />
             <Route path="/gallery" element={<MemoryGallery />} />
             <Route path="/search" element={<MemorySearch />} />

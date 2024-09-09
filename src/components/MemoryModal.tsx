@@ -74,11 +74,11 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({isOpen, onClose, curren
                 >
                   <TextField name="name" label="Name" size="small" defaultValue={currentMemory.name} onChange={onChange}/>
                   <TextField name="dateTaken" label="Date Taken" size="small" defaultValue={currentMemory.dateTaken} onChange={onChange}/>
-                  <TextField name="location" label="Location" size="small" defaultValue={currentMemory.address} onChange={onChange}/>
+                  <TextField name="location" label="Address" size="small" defaultValue={currentMemory.address} onChange={onChange}/>
 
                   <Grid autoFlow="column">
                     <TextField name="locationLat" label="Latitude" size="small" width="95%" variation="quiet" defaultValue={currentMemory.location.lat} onChange={onChange}/>
-                    <TextField name="locationLong" label="Longtitude" size="small" variation="quiet" defaultValue={currentMemory.location.long} onChange={onChange}/>
+                    <TextField name="locationLong" label="Longitude" size="small" variation="quiet" defaultValue={currentMemory.location.long} onChange={onChange}/>
                   </Grid>
                   
                   <TextAreaField name="description" label="Description" size="small" defaultValue={currentMemory.description} onChange={onChange} />

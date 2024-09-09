@@ -59,7 +59,10 @@ const schema = a.schema({
     // search patterns
     tag: a.string(),
     year: a.integer(),
-    month: a.string()
+    month: a.string(),
+
+    faces: a.json().array(),
+    people: a.string().array(),
 
     //11/12/2017, 4:24:00 PM 40.778950, -73.962053
     // amplify auto adds an "owner: a.string()" field that contains the owner's identity info upon note creation to each note

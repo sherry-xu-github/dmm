@@ -35,6 +35,7 @@ import { auth } from './auth/resource';
 import { data } from './data/resource';
 import { storage } from './storage/resource';
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
+//import * as rekognition from "aws-cdk-lib/aws-rekognition";
 import { Stack } from "aws-cdk-lib";
 
 const backend = defineBackend({
@@ -60,7 +61,12 @@ backend.auth.resources.authenticatedUserIamRole.addToPrincipalPolicy(
       "rekognition:DetectModerationLabels",
       "rekognition:DetectText",
       "rekognition:DetectLabel",
-      "rekognition:SearchFacesByImage",      
+      "rekognition:SearchFacesByImage",
+      /*
+      'rekognition:CreateCollection',
+      'rekognition:DeleteCollection',
+      'rekognition:IndexFaces',
+      */
       "textract:AnalyzeDocument",
       "textract:DetectDocumentText",
       "textract:GetDocumentAnalysis",
@@ -71,6 +77,11 @@ backend.auth.resources.authenticatedUserIamRole.addToPrincipalPolicy(
   })
 );
 
+/*
+const faceCollection = new rekognition.CfnCollection(backend.auth.resources.userPool, "FaceCollection", {
+  collectionId: "my-face-collection",
+});
+*/
 
 backend.addOutput({
   custom: {
@@ -123,6 +134,12 @@ backend.addOutput({
           proxy: false,
           region: Stack.of(backend.auth.resources.authenticatedUserIamRole).region,
         },
+        /*
+        facesCollection: {
+          collectionId: faceCollection.collectionId,
+          region: Stack.of(backend.auth.resources.authenticatedUserIamRole).region,
+        },
+        */
       },
       interpret: {
         interpretText: {

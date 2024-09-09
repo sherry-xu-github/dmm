@@ -96,10 +96,11 @@ export const MemoryUpload = () => {
               <Text fontSize="0.8em" key={file.name}>{file.name}</Text>
             ))}
           </Flex>
-            
+          {percentage === -1 && <Loader />}
           {percentage > 0 && percentage < 100 && <Loader variation="linear" percentage={percentage} isDeterminate isPercentageTextHidden/>}
           {percentage === 100 && <Message colorTheme="success">Upload complete!</Message>}
-
+          {percentage === -2 && <Message colorTheme="error">Upload failed!</Message>}
+          {percentage === -3 && <Message colorTheme="error">Please add some photos</Message>}
           <Button type="submit" variation="primary">
             Create Memory
           </Button> 

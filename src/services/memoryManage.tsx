@@ -45,7 +45,7 @@ export const useMemoryManage: any = () => {
     setFiles,
     setMemories, 
     setError, 
-    setPercentage,
+    percentage, setPercentage,
     setIsModalOpen,
     setUpdateSuccess
   } = useMemoryContext();
@@ -145,112 +145,140 @@ export const useMemoryManage: any = () => {
 
   const createMemories = async (event: FormEvent<HTMLFormElement>, files: File[]) => {
     event.preventDefault();
-    setPercentage(0);
     //const cT = event.currentTarget;
     //const form = new FormData(cT);
     //console.log(event.currentTarget)
 
     console.log(files)
-
-    for (const file of files){
-      const mName = new Date().toISOString().replace(/[^\w]/gi, '-');
-      console.log(mName)
-
-      const imageName = file.name;
-      console.log(imageName);
-
-      const location = {lat: 0.0, long: 0.0};
-      let dateTaken = null;
-      //const err = await checkMemoryName();
-      //console.log(event.currentTarget)
-      //const tagsForm = (form.get("tags") as string).split(",")
-
-      try {
-        // Read the EXIF data using exifr
-        const metadata = await exifr.parse(file, { gps: true, tiff: true });
-  
-        dateTaken = metadata.DateTimeOriginal
-          ? new Date(metadata.DateTimeOriginal).toJSON()
-          : 'Unknown';
-        
-        if (metadata.latitude !== undefined && metadata.longitude !== undefined) {
-          location.lat = metadata.latitude.toFixed(6);
-          location.long = metadata.longitude.toFixed(6);
-        }
-        console.log(dateTaken, location)
-
-      } catch (error) {
-        console.error('Error reading metadata:', error);
-      }
-      
-      const tags: string[] = []
-      //const response = 
-      await Predictions.identify({
-        labels: {
-          source: {
-            file
-          },
-          type: 'LABELS'
-        }
-      })
-      .then((response) => {
-        const { labels } = response;
-        console.log(labels)
-        labels!.forEach((object) => {
-          const { name, boundingBoxes } = object;
-          console.log(name, boundingBoxes)
-        });
-        const labelNames: string[] = labels!.map(labelInfo => labelInfo.name as string);
-        console.log(labelNames)
-        //tags.push(...tagsForm, ...labelNames);
-        tags.push(...labelNames);
-      })
-      .catch((err) => console.log({ err }));
-      //console.log(response)
-      
-      console.log(tags)
-      /*
-      if (tags){
-        //console.log(tags)
-        for (const currentTag of tags){
-          //console.log(currentTag)
-          const taggedResult = await client.models.Memory.create({
-            tag: currentTag,
-            name: 
-            // change this to use id
-          });
-          //console.log(taggedResult)
-        }
-      }
-      */
-
-      const result = await client.models.Memory.create({
-        name: mName,
-        description: "",
-        image: imageName,
-        tags: tags,
-        dateTaken: dateTaken,
-        location: location,
-      });
-
-      if (result.data) {
-        const newMemory = result.data;
-        console.log(newMemory);
-        if (newMemory.image){
-          await uploadData({
-            path: ({ identityId }) => `media/${identityId}/${newMemory.image}`,
-            data: file,
-          }).result;
-        }
-      }
-      //const progress = Math.min(100, Math.random() * 100); // Simulated progress
-      setPercentage((prevPercentage) => prevPercentage + (1 / files.length) * 100 );
+    if (files.length < 1) {
+      setPercentage(-3);
+      return
     }
+    else{
+      setPercentage(-1);
+      for (const [index, file] of files.entries()){
+        const mName = new Date().toISOString().replace(/[^\w]/gi, '-');
+        console.log(mName)
+  
+        const imageName = file.name;
+        console.log(imageName);
+  
+        const location = {lat: 0.0, long: 0.0};
+        let dateTaken = null;
+        //const err = await checkMemoryName();
+        //console.log(event.currentTarget)
+        //const tagsForm = (form.get("tags") as string).split(",")
+  
+        try {
+          // Read the EXIF data using exifr
+          const metadata = await exifr.parse(file, { gps: true, tiff: true });
+    
+          dateTaken = metadata.DateTimeOriginal
+            ? new Date(metadata.DateTimeOriginal).toJSON()
+            : 'Unknown';
+          
+          if (metadata.latitude !== undefined && metadata.longitude !== undefined) {
+            location.lat = metadata.latitude.toFixed(6);
+            location.long = metadata.longitude.toFixed(6);
+          }
+          console.log(dateTaken, location)
+  
+        } catch (error) {
+          console.error('Error reading metadata:', error);
+        }
+        
+        const tags: string[] = []
+        
+        /*
+        const { entities } = await Predictions.identify({
+          entities: {
+            source: {
+              file,
+            },
+          }
+        })
+        //console.log(entities)
+        const facesData = entities.map(entity => JSON.stringify(entity));
+        console.log(facesData)
+        */
+        
+        await Predictions.identify({
+          labels: {
+            source: {
+              file
+            },
+            type: 'LABELS'
+          }
+        })
+        .then((response) => {
+          const { labels } = response;
+          console.log(labels)
+          labels!.forEach((object) => {
+            const { name, boundingBoxes } = object;
+            console.log(name, boundingBoxes)
+          });
+          const labelNames: string[] = labels!.map(labelInfo => labelInfo.name as string);
+          console.log(labelNames)
+          //tags.push(...tagsForm, ...labelNames);
+          tags.push(...labelNames);
+        })
+        .catch((err) => console.log({ err }));
+        //console.log(response)
+        
+        console.log(tags)
+        /*
+        if (tags){
+          //console.log(tags)
+          for (const currentTag of tags){
+            //console.log(currentTag)
+            const taggedResult = await client.models.Memory.create({
+              tag: currentTag,
+              name: 
+              // change this to use id
+            });
+            //console.log(taggedResult)
+          }
+        }
+        */
+  
+        const result = await client.models.Memory.create({
+          name: mName,
+          description: "",
+          image: imageName,
+          tags: tags,
+          dateTaken: dateTaken,
+          location: location,
+          //faces: facesData,
+          faces: [],
+          people: [],
+        });
+  
+        if (result.data) {
+          const newMemory = result.data;
+          console.log(newMemory);
+          if (newMemory.image){
+            await uploadData({
+              path: ({ identityId }) => `media/${identityId}/${newMemory.image}`,
+              data: file,
+            }).result;
+          }
+          //const progress = Math.min(100, Math.random() * 100); // Simulated progress
+          setPercentage((prevPercentage) => prevPercentage + (1 / files.length) * 100 );
+  
+          if (index === files.length - 1 && percentage != -2) {
+            setPercentage(100);
+          }
+        }
+        else {
+          setPercentage(-2);
+        }
+      }
+    }
+
     //fetchMemories();
     //event.currentTarget.reset();
     //cT.reset();
     //setFiles([]);
-    setPercentage(100);
   };
 
   const updateMemory = async (event: FormEvent<HTMLFormElement>) => {
