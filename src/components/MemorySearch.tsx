@@ -75,6 +75,7 @@ export const MemorySearch = () => {
         currentMemory={currentMemory}
       />
     </Flex>
+    
 );
 };
 
