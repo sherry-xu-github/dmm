@@ -49,12 +49,12 @@ const schema = a.schema({
 
     image: a.string(),
     
-    
     createdAt: a.string(),
     updatedAt: a.string(),
     dateTaken: a.string(),
     
     location: a.ref('Location'),
+    address: a.string(),
     
     // search patterns
     tag: a.string(),
@@ -64,11 +64,13 @@ const schema = a.schema({
     //11/12/2017, 4:24:00 PM 40.778950, -73.962053
     // amplify auto adds an "owner: a.string()" field that contains the owner's identity info upon note creation to each note
   })
-  .secondaryIndexes((index) => [
+  /*
+  .secondaryIndexes((index) => [ 
     index("tag"),
     index("tag").sortKeys(["name", "description", "dateTaken"]),
     index("year"),
   ])
+  */
   .authorization((allow) => [allow.owner()]),
   // allow.owner(): a per-owner auth rule that restrics the memory's access to the owner of the note
 });

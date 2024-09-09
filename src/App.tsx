@@ -22,8 +22,6 @@ export default function App() {
     {({ signOut }) => (
       <>
         <MemoryProvider>
-
-        
           <Flex
             //as="nav"
             //direction="row"
@@ -35,18 +33,9 @@ export default function App() {
             <Menu
               menuAlign="start"
             >
-              
               <Button variation="link" as={Link} to="/create">Create</Button>
-            
-            
               <Button variation="link" as={Link} to="/gallery">Gallery</Button>
-            
-            
               <Button variation="link" as={Link} to="/search">Search</Button>
-            
-            
-              <Button variation="link" as={Link} to="/profile">Profile</Button>
-            
               <Button onClick={signOut}>Sign Out</Button>
             </Menu>
 

@@ -1,42 +1,30 @@
-import { Grid, Flex, Heading, Text, Button, Image, Badge, View, useTheme, SearchField } from "@aws-amplify/ui-react";
-import { useMemoryUpload, useMemoryAutoComplete } from "../services/memoryService";
+import { Grid, Flex, Image, View, useTheme, SearchField } from "@aws-amplify/ui-react";
+import { useMemoryModal } from "../services/memoryModal";
 import { MemoryModal } from "../components/MemoryModal";
-import { useMemorySearch } from "../services/memoryService";
-import logo from './../assets/MemoryCellar.png';
-
+import { useMemorySearch } from "../services/memorySearch";
 import { useMemoryContext } from "../context/MemoryContext";
-import { useState, useEffect, FormEvent } from "react";
-import { useSearchParams } from "react-router-dom";
+import logo from './../assets/MemoryCellar.png';
 
 export const MemorySearch = () => {
   const {
-    memories,
+    filteredImages,
     isModalOpen,
-    setIsModalOpen,
     currentMemory,
-    searchString
-    
-    
+    searchString,
   } = useMemoryContext();
-
 
   const { 
     handleImageClick,
     closeModal
-  } = useMemoryAutoComplete();
+  } = useMemoryModal();
 
 
   const {
     handleSearch,
     onChange,
-    onClear
+    onClear,
   } = useMemorySearch();  
 
-  /*
-  const isLargeScreen = useMediaQuery({ query: '(min-width: 1024px)' });
-  const isMediumScreen = useMediaQuery({ query: '(min-width: 768px)' });
-  const columns = isLargeScreen ? 'repeat(4, 1fr)' : isMediumScreen ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)';
-  */
   const { tokens } = useTheme();
 
   return (
@@ -45,18 +33,19 @@ export const MemorySearch = () => {
       justifyContent="center"
       alignItems="center"
       direction="column"
-      width="80%"
+      width="90%"
       margin="0 auto"
       color="gray"
     >
       <img src={logo} alt="logo" />      
       <SearchField
           label="search"
+          width="60%"
           onChange={onChange}
           onClear={onClear}
           value={searchString}
           padding="2em"
-          placeholder="Search my memories"
+          placeholder="Search my memories in words"
           onSubmit={handleSearch}
         />
       <Grid 
@@ -66,13 +55,14 @@ export const MemorySearch = () => {
         padding="2em"
       >
         
-        {memories.map((memory) => (
+        {filteredImages.map((memory: any) => (
           <View 
             key={memory.id || memory.name}
           >    
             {memory.image && (<Image 
               src={memory.image} 
-              alt={`visual aid for ${memory.name}`} 
+              //alt={`visual aid for ${memory.name}`} 
+              alt={''} 
               onClick={() => handleImageClick(memory.id)}
               style={{ objectFit: 'cover', width: '100%', height: 'auto' }}
             />)}

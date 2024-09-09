@@ -1,9 +1,7 @@
-import { Grid, Flex, Heading, Text, Button, Image, Badge, View, useTheme, Pagination } from "@aws-amplify/ui-react";
-import { useMemoryUpload, useMemoryAutoComplete } from "../services/memoryService";
+import { Grid, Flex, Image, View, useTheme } from "@aws-amplify/ui-react";
+import { useMemoryModal } from "../services/memoryModal";
 import { MemoryModal } from "../components/MemoryModal";
 import logo from './../assets/MemoryCellar.png';
-import { useMediaQuery } from 'react-responsive';
-import * as React from 'react';
 
 import { useMemoryContext } from "../context/MemoryContext";
 
@@ -11,22 +9,14 @@ export const MemoryGallery = () => {
   const {
     memories,
     isModalOpen,
-    setIsModalOpen,
     currentMemory
-    
   } = useMemoryContext();
-
 
   const { 
     handleImageClick,
     closeModal
-  } = useMemoryAutoComplete();
+  } = useMemoryModal();
 
-  /*
-  const isLargeScreen = useMediaQuery({ query: '(min-width: 1024px)' });
-  const isMediumScreen = useMediaQuery({ query: '(min-width: 768px)' });
-  const columns = isLargeScreen ? 'repeat(4, 1fr)' : isMediumScreen ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)';
-  */
   const { tokens } = useTheme();
 
   return (
@@ -46,7 +36,7 @@ export const MemoryGallery = () => {
         gap={tokens.space.small}
         padding="2em"
       >
-        {memories.map((memory) => (
+        {memories.map((memory: any) => (
           <View 
             key={memory.id || memory.name}
           >    
