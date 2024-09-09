@@ -7,7 +7,6 @@ import { useMemoryContext } from "../context/MemoryContext";
 import outputs from "../../amplify_outputs.json";
 import nlp from 'compromise';
 import plg from 'compromise-dates'
-import axios from 'axios';
 
 Amplify.configure(outputs);
 Amplify.configure({
@@ -27,16 +26,6 @@ export const useMemorySearch = () => {
     timeRange, setTimeRange,
     filteredMemories, setFilteredMemories,
     setFilteredImages,
-    location, setLocation,
-    coordinates, setCoordinates,
-    lat1, setLat1,
-    lon1, setLon1,
-    lat2, setLat2,
-    lon2, setLon2,
-    isWithinRange, setIsWithinRange,
-    isSameStreet, setIsSameStreet,
-    latitude, setLatitude,
-    longitude, setLongitude,
     address, setAddress,
   } = useMemoryContext();
 
