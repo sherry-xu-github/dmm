@@ -143,6 +143,7 @@ export const useCollectionManager: any = (collectionName: string) => {
     describeCollection,
     deleteCollection,
     identityIdRaw,
+    currentIdentityId
   };
 };
 
@@ -254,7 +255,7 @@ export const useFaceUserManager: any = (collectionName: string) => {
         console.log(`matched user id: ${matchedId}`);
         return matchedId; // returning the first match
       });
-      return [matchedUser, true]
+      return [matchedUser?.User?.UserId, true]
     } else {
       const userId = generateUniqueId();
       await createUser(userId);
@@ -298,7 +299,7 @@ export const useFaceUserManager: any = (collectionName: string) => {
 
   const listUsers = async () => {
     try {
-      console.log(`List users: ${collectionName}`)
+      console.log(`List users: ${currentIdentityId}`)
 
       const input = {
         "CollectionId": currentIdentityId,
@@ -308,7 +309,7 @@ export const useFaceUserManager: any = (collectionName: string) => {
       // example id: createuser-1686181562299
       console.log(`Listing users: ${response}`)
       console.log(response.$metadata)
-      console.log(response.NextToken)
+      //console.log(response.NextToken)
       console.log(response.Users)
       return response;
     } catch (err) {

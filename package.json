@@ -12,6 +12,7 @@
   "dependencies": {
     "@aws-amplify/geo": "^3.0.47",
     "@aws-amplify/predictions": "^6.1.19",
+    "@aws-amplify/storage": "^6.6.7",
     "@aws-amplify/ui-react": "^6.1.14",
     "aws-amplify": "^6.6.0",
     "axios": "^1.7.7",

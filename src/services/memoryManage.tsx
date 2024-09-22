@@ -44,6 +44,7 @@ const client = generateClient<Schema>({
 });
 
 export const useMemoryManage: any = () => {
+
   const { 
     currentMemory, setCurrentMemory,
     tagValues, setTagValues,
@@ -55,7 +56,10 @@ export const useMemoryManage: any = () => {
     percentage, setPercentage,
     setIsModalOpen,
     setUpdateSuccess,
-    collectionName,
+    faceUsers,
+    setFaceUsers,
+    imageURLs,
+    setImageURLs
   } = useMemoryContext();
 
   const {     
@@ -65,8 +69,9 @@ export const useMemoryManage: any = () => {
     //searchFace,
     //associateFaces,
     //searchUsers,
+    currentIdentityId
     
-  } = useCollectionManager(collectionName);
+  } = useCollectionManager();
 
 
   const {
@@ -86,8 +91,20 @@ export const useMemoryManage: any = () => {
   useEffect(() => {
     fetchMemories();
     resetStates();
+    fetchUsers();
+    
     //test
   }, []);
+
+  
+
+  useEffect(() => {
+    console.log(faceUsers);
+    if (faceUsers) {
+      fetchImageURLs();
+    }
+    
+  },[faceUsers]);
 
   useEffect(() => {
     if (currentMemory) {
@@ -327,6 +344,7 @@ export const useMemoryManage: any = () => {
       for (const [index, file] of files.entries()){
 
         var usersArray = [];
+        var userNamesArray = [];
         const mName = new Date().toISOString().replace(/[^\w]/gi, '-');
         console.log(mName)
   
@@ -339,7 +357,7 @@ export const useMemoryManage: any = () => {
         
             
   
-        const location = {lat: 0.0, long: 0.0};
+        const location = {lat: 0.0, long: 0.0, address: ''};
         let dateTaken = null;
         //const err = await checkMemoryName();
         //console.log(event.currentTarget)
@@ -426,7 +444,8 @@ export const useMemoryManage: any = () => {
           }
         }
         */
-
+        
+        console.log(file);
         await uploadData({
           path: ({ identityId }) => `media/${identityId}/${imageName}`,
           data: file,
@@ -434,7 +453,8 @@ export const useMemoryManage: any = () => {
 
         const [faceResponse, faceIds] = await indexFace(outputs.storage.bucket_name, `media/${identityIdRaw}/${imageName}`);
         
-
+        let usersResponse = []
+        let userEntriesExisting = []
         for (const face of faceResponse) {
           console.log("face result")
           console.log(face)
@@ -442,13 +462,16 @@ export const useMemoryManage: any = () => {
           //console.log(imageUrl)
           //console.log(face.Face.BoundingBox)
 
+          const faceImageName = `${face.Face.FaceId}-${imageName}`;
+
           cropImage(imageUrl, face.Face.BoundingBox)
           .then(async (croppedBuffer) => {
             // Handle cropped image buffer
             const fileFromBuffer = bufferToFile(croppedBuffer, file.name);
+            console.log(fileFromBuffer);
 
             await uploadData({
-              path: ({ identityId }) => `media/${identityId}/${face.Face.FaceId}-${imageName}`,
+              path: ({ identityId }) => `media/${identityId}/${faceImageName}`,
               data: fileFromBuffer,
             }).result;
             console.log("uploaded cropped image to s3")
@@ -458,17 +481,31 @@ export const useMemoryManage: any = () => {
           });
 
 
-          const [userId, match] = await searchUsers(outputs.storage.bucket_name, `media/${identityIdRaw}/${imageName}`);
+          const [userId, match] = await searchUsers(outputs.storage.bucket_name, `media/${identityIdRaw}/${faceImageName}`);
           console.log(`match: ${match}`)
           if (match === false) {
             associateFaces(faceIds, userId)
-            const result = await client.models.Memory.create({
+            const userCreationResult = await client.models.Memory.create({
               facesUserId: userId as string,
               facesUserName: `User created at ${mName}`,
-              //facesFaceIds: faceIds,
+              facesFaceUrls: face.Face.FaceId,
+              facesMemoryIds: [],
+              facesUserCover: faceImageName
             });
+            usersResponse.push(userCreationResult)
+            userNamesArray.push(`User created at ${mName}`)
+          }
+          else{
+            //get existing user entry with this user id
+            console.log(`match is found. fetching this userid`)
+            console.log(userId)
+            const entry = await fetchUserEntryById(userId)
+            userEntriesExisting.push(entry)
+            userNamesArray.push(entry.facesUserName)
           }
           usersArray.push(userId)
+          
+          
           
 
         }
@@ -482,23 +519,75 @@ export const useMemoryManage: any = () => {
           image: imageName,
           dateTaken: dateTaken,
           location: location,
-          //faces: facesData,
           faces: facesData,
           userIds: usersArray,
-          
+          userNames: userNamesArray
         });
   
         if (result.data) {
           const newMemory = result.data;
           console.log(newMemory);
+
+          const memId = newMemory.id;
+
+          if (usersResponse.length > 0) {
+            console.log("usersResponse")
+            console.log(usersResponse)
+            for (const user of usersResponse) {
+              console.log(user)
+              const userEntry = await getMemoryById(user.data.id);
+
+              let memIds = userEntry.facesMemoryIds;
+              memIds.push(memId)
+
+              const updateContent={
+                id: userEntry.id as string,
+                facesMemoryIds: memIds,
+              }
+              console.log(updateContent)
+        
+              const { data, errors } = await client.models.Memory.update(updateContent);
+              console.log(data, errors)
+              if (data) {
+                setUpdateSuccess(true);
+              }
+              if (errors) {
+                setError(errors);
+              }
+            }
+          }
+
+          if (userEntriesExisting.length > 0) {
+            for (const userEntry of userEntriesExisting) {
+              console.log(userEntry)
+              let memIds = userEntry.facesMemoryIds;
+              memIds.push(memId)
+  
+              const updateContent={
+                id: userEntry.id as string,
+                facesMemoryIds: memIds,
+              }
+              console.log(updateContent)
+        
+              const { data, errors } = await client.models.Memory.update(updateContent);
+              console.log(data, errors)
+              if (data) {
+                setUpdateSuccess(true);
+              }
+              if (errors) {
+                setError(errors);
+              }
+            } 
+          }
           
-            
           
 
 
           
           
 
+
+          
 
           //const progress = Math.min(100, Math.random() * 100); // Simulated progress
           setPercentage((prevPercentage) => prevPercentage + (1 / files.length) * 100 );
@@ -704,6 +793,39 @@ export const useMemoryManage: any = () => {
   };
   */
 
+  const fetchUsers = async() => {
+    console.log("fetching users")
+    const userResponse = await listUsers();
+    console.log(userResponse);
+    if (userResponse.Users.length >0) {
+      var userArray = []
+      for (const userInfo of userResponse.Users) {
+        console.log(userInfo.UserId)
+        const entry = await fetchUserEntryById(userInfo.UserId)
+        userArray.push(entry)
+      }
+      setFaceUsers(userArray)
+    }
+    
+  };
+
+  const fetchImageURLs = async () => {
+    const urls = {};
+    console.log(faceUsers)
+    for (const user of faceUsers) {
+      if (user.facesUserCover) {
+        // Generate a signed URL from S3
+        const imageUrl = await getUrl({
+          path: `media/${identityIdRaw}/${user.facesUserCover}`
+        });
+        urls[user.facesUserId] = imageUrl;
+        console.log(urls)
+      }
+    }
+    console.log(urls)
+    setImageURLs(urls);
+  };
+
   const fetchMemories = async () => {
     /*
     do {
@@ -767,6 +889,26 @@ export const useMemoryManage: any = () => {
     }
   };
 
+
+  async function fetchUserEntryById(facesUserId) {
+    try {
+      const {data, errors} = await client.models.Memory.listMemoryByFacesUserIdAndFacesUserName(
+        {
+          facesUserId: facesUserId
+        }
+      )
+      console.log(data)
+
+      const entry = await getMemoryById(data[0].id)
+      console.log(entry)
+      return entry
+
+    }
+    catch (err) {
+      console.error(err)
+    }
+  }
+
   /*
   async function fetchTaggedMemories() {
     try{
@@ -816,7 +958,8 @@ export const useMemoryManage: any = () => {
     client,
     onFilePickerChange,
     handleSubmit,
-    resetStates
+    resetStates,
+    fetchImageURLs
   };
 }
 

@@ -38,6 +38,7 @@ interface MemoryContextType {
   error: any; setError: React.Dispatch<React.SetStateAction<any>>;
   collectionName; setCollectionName;
   faceUsers; setFaceUsers;
+  imageURLs; setImageURLs;
 
   //acValue; setAcValue;
   //taggedMemories; setTaggedMemories;
@@ -92,6 +93,8 @@ export const MemoryProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [collectionName, setCollectionName] = useState("");
   const [faceUsers, setFaceUsers] = useState<any>(null);
   const [error, setError] = useState<any>(null);
+  const [imageURLs, setImageURLs] = useState({});
+  
   //const [taggedMemories, setTaggedMemories] = useState(null);
   //const [acValue, setAcValue] = useState('');
   
@@ -140,6 +143,7 @@ export const MemoryProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       collectionName, setCollectionName,
       faceUsers, setFaceUsers,
       error, setError,
+      imageURLs, setImageURLs,
       //taggedMemories, setTaggedMemories,
       //addMemory,
       //acValue, setAcValue,
