@@ -7,6 +7,13 @@ import { useMemoryContext } from "../context/MemoryContext";
 import { Predictions } from '@aws-amplify/predictions';
 import * as exifr from 'exifr';
 import outputs from "../../amplify_outputs.json";
+import React, { useState } from 'react';
+
+import sharp from 'sharp';
+import ReactCrop from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+import {useCollectionManager, useFaceUserManager} from "./faceManager";
+
 
 
 export interface Memory {
@@ -47,12 +54,39 @@ export const useMemoryManage: any = () => {
     setError, 
     percentage, setPercentage,
     setIsModalOpen,
-    setUpdateSuccess
+    setUpdateSuccess,
+    collectionName,
   } = useMemoryContext();
+
+  const {     
+    identityIdRaw,
+    //indexFace,
+    createCollection,
+    //searchFace,
+    //associateFaces,
+    //searchUsers,
+    
+  } = useCollectionManager(collectionName);
+
+
+  const {
+    indexFace,
+    createUser,
+    listUsers,
+    searchFace,
+    associateFaces,
+    searchUsers,
+    generateUniqueId,
+  } = useFaceUserManager();
+  
+  
+  
+
 
   useEffect(() => {
     fetchMemories();
     resetStates();
+    //test
   }, []);
 
   useEffect(() => {
@@ -111,7 +145,8 @@ export const useMemoryManage: any = () => {
   const setInitialTagValues = () => {
     console.log(currentMemory)
     console.log(tagValues)
-    if (currentMemory && !tagValues) {
+    console.log(Object.keys(tagValues).length)
+    if (currentMemory && Object.keys(tagValues).length == 0) {
       const initialTagValues = Object.fromEntries(
           currentMemory.tags.map((tag: string) => [tag, true])
       );
@@ -119,6 +154,7 @@ export const useMemoryManage: any = () => {
       console.log(initialTagValues);
       setTagValues(initialTagValues);
     }
+    console.log(tagValues)
   }
 
   /*
@@ -143,13 +179,145 @@ export const useMemoryManage: any = () => {
   } 
   */ 
 
+  const ImageCropper = ({ image }) => {
+    const [crop, setCrop] = useState({ unit: 'px', width: 0, height: 0 });
+  
+    const handleImageLoaded = (image) => {
+      // Calculate crop based on bounding box
+      if (boundingBox) {
+        const { Width, Height, Left, Top } = boundingBox;
+        setCrop({
+          unit: 'px',
+          x: Left * image.width,
+          y: Top * image.height,
+          width: Width * image.width,
+          height: Height * image.height,
+        });
+      }
+    };
+  
+    return (
+      <div>
+        <ReactCrop 
+          src={image}
+          crop={crop}
+          onChange={setCrop}
+          onComplete={handleCropComplete}
+        />
+      </div>
+    );
+  };
+
+  const getImageDimensions = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (event) => {
+        const imageUrl = event.target.result;
+        const img = new Image();
+        img.src = event.target.result;
+        
+        img.onload = () => {
+          const width = img.width;
+          const height = img.height;
+          resolve({ width, height, imageUrl });
+        };
+        
+        img.onerror = reject;
+      };
+      
+      reader.onerror = reject;
+  
+      // Read the file as a data URL (base64)
+      reader.readAsDataURL(file);
+
+
+      /*
+      reader.onload = (e) => {
+        const imageUrl = e.target.result;
+        // Do something with the image URL, e.g., display the image
+        const img = document.createElement("img");
+        img.src = imageUrl;
+        document.body.appendChild(img);
+      };
+  
+      reader.readAsDataURL(fileInput.files[0]);
+      */
+    });
+  };
+
+  const cropImage = (imgSrc, boundingBox) => {
+    console.log("imgSrc")
+    console.log(imgSrc)
+    console.log("boundingBox")
+    console.log(boundingBox)
+    
+    
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous"; // If using external images
+      img.src = imgSrc;
+  
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+  
+        // Calculate bounding box dimensions based on image size
+        const { width, height } = img;
+        const boxX = boundingBox.Left * width;
+        const boxY = boundingBox.Top * height;
+        const boxWidth = boundingBox.Width * width;
+        const boxHeight = boundingBox.Height * height;
+  
+        // Set canvas dimensions to the size of the cropped image
+        canvas.width = boxWidth;
+        canvas.height = boxHeight;
+  
+        // Draw the cropped image on the canvas
+        ctx.drawImage(
+          img,
+          boxX, boxY, boxWidth, boxHeight,  // Source image coordinates and size
+          0, 0, boxWidth, boxHeight         // Destination on canvas
+        );
+  
+        // Convert the canvas to a blob (or base64)
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(blob); // Blob can be uploaded to S3
+          } else {
+            reject(new Error("Image cropping failed"));
+          }
+        }, 'image/jpeg');
+      };
+  
+      img.onerror = reject;
+    });
+  };
+
+  const bufferToFile = (buffer, fileName) => {
+    
+    const mimeType = "image/jpeg"
+    // Create a Blob from the buffer
+    const blob = new Blob([buffer], { type: mimeType });
+  
+    // If you need a File object (optional)
+    const file = new File([blob], fileName, { type: mimeType });
+  
+    return file;
+  };
+
+
   const createMemories = async (event: FormEvent<HTMLFormElement>, files: File[]) => {
     event.preventDefault();
     //const cT = event.currentTarget;
     //const form = new FormData(cT);
     //console.log(event.currentTarget)
 
+    await createCollection();
+
     console.log(files)
+
+    // catch empty file upload
     if (files.length < 1) {
       setPercentage(-3);
       return
@@ -157,11 +325,19 @@ export const useMemoryManage: any = () => {
     else{
       setPercentage(-1);
       for (const [index, file] of files.entries()){
+
+        var usersArray = [];
         const mName = new Date().toISOString().replace(/[^\w]/gi, '-');
         console.log(mName)
   
         const imageName = file.name;
         console.log(imageName);
+
+        const { width, height, imageUrl } = await getImageDimensions(file);
+        console.log(`Image width: ${width}, height: ${height}`);
+
+        
+            
   
         const location = {lat: 0.0, long: 0.0};
         let dateTaken = null;
@@ -184,7 +360,13 @@ export const useMemoryManage: any = () => {
           console.log(dateTaken, location)
   
         } catch (error) {
-          console.error('Error reading metadata:', error);
+          if (error instanceof TypeError){
+            console.log(`Image ${imageName} does not have any metadata`)
+          }
+          else{
+            console.error('Error reading metadata:', error);
+          }
+          
         }
         
         const tags: string[] = []
@@ -201,6 +383,10 @@ export const useMemoryManage: any = () => {
         const facesData = entities.map(entity => JSON.stringify(entity));
         console.log(facesData)
         */
+
+
+        
+
         
         await Predictions.identify({
           labels: {
@@ -240,28 +426,80 @@ export const useMemoryManage: any = () => {
           }
         }
         */
+
+        await uploadData({
+          path: ({ identityId }) => `media/${identityId}/${imageName}`,
+          data: file,
+        }).result;
+
+        const [faceResponse, faceIds] = await indexFace(outputs.storage.bucket_name, `media/${identityIdRaw}/${imageName}`);
+        
+
+        for (const face of faceResponse) {
+          console.log("face result")
+          console.log(face)
+
+          //console.log(imageUrl)
+          //console.log(face.Face.BoundingBox)
+
+          cropImage(imageUrl, face.Face.BoundingBox)
+          .then(async (croppedBuffer) => {
+            // Handle cropped image buffer
+            const fileFromBuffer = bufferToFile(croppedBuffer, file.name);
+
+            await uploadData({
+              path: ({ identityId }) => `media/${identityId}/${face.Face.FaceId}-${imageName}`,
+              data: fileFromBuffer,
+            }).result;
+            console.log("uploaded cropped image to s3")
+          })
+          .catch(err => {
+            console.error(err);
+          });
+
+
+          const [userId, match] = await searchUsers(outputs.storage.bucket_name, `media/${identityIdRaw}/${imageName}`);
+          console.log(`match: ${match}`)
+          if (match === false) {
+            associateFaces(faceIds, userId)
+            const result = await client.models.Memory.create({
+              facesUserId: userId as string,
+              facesUserName: `User created at ${mName}`,
+              //facesFaceIds: faceIds,
+            });
+          }
+          usersArray.push(userId)
+          
+
+        }
+        
+        const facesData = faceResponse.map(entity => JSON.stringify(entity));
   
         const result = await client.models.Memory.create({
           name: mName,
           description: "",
-          image: imageName,
           tags: tags,
+          image: imageName,
           dateTaken: dateTaken,
           location: location,
           //faces: facesData,
-          faces: [],
-          people: [],
+          faces: facesData,
+          userIds: usersArray,
+          
         });
   
         if (result.data) {
           const newMemory = result.data;
           console.log(newMemory);
-          if (newMemory.image){
-            await uploadData({
-              path: ({ identityId }) => `media/${identityId}/${newMemory.image}`,
-              data: file,
-            }).result;
-          }
+          
+            
+          
+
+
+          
+          
+
+
           //const progress = Math.min(100, Math.random() * 100); // Simulated progress
           setPercentage((prevPercentage) => prevPercentage + (1 / files.length) * 100 );
   
@@ -280,6 +518,8 @@ export const useMemoryManage: any = () => {
     //cT.reset();
     //setFiles([]);
   };
+
+  
 
   const updateMemory = async (event: FormEvent<HTMLFormElement>) => {
     console.log("updating")
@@ -335,8 +575,11 @@ export const useMemoryManage: any = () => {
         id: currentMemory.id as string,
         name: form.get("name") as string,
         description: form.get("description") as string,
-        address: form.get("location") as string,
-        location: {lat: Number(form.get("locationLat")), long: Number(form.get("locationLong"))},
+        location: {
+          lat: Number(form.get("locationLat")), 
+          long: Number(form.get("locationLong")), 
+          address: form.get("location") as string,
+        },
         tags: Object.keys(tagValues).filter(TagStatus => tagValues![TagStatus]),
         dateTaken: form.get("dateTaken") as string,
       }

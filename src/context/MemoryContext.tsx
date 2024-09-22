@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 
+console.log("in context")
 interface MemoryContextType {
   memories: any; setMemories: React.Dispatch<React.SetStateAction<any[]>>;
   
@@ -23,20 +24,21 @@ interface MemoryContextType {
   filteredMemories: any; setFilteredMemories: React.Dispatch<React.SetStateAction<any>>;
   filteredImages: any; setFilteredImages: React.Dispatch<React.SetStateAction<any>>;
 
-  location: string, setLocation: React.Dispatch<React.SetStateAction<string>>,
-  coordinates: any, setCoordinates: React.Dispatch<React.SetStateAction<any>>,
-  lat1: string, setLat1: React.Dispatch<React.SetStateAction<string>>,
-  lon1: string, setLon1: React.Dispatch<React.SetStateAction<string>>,
-  lat2: string, setLat2: React.Dispatch<React.SetStateAction<string>>,
-  lon2: string, setLon2: React.Dispatch<React.SetStateAction<string>>,
-  isWithinRange: boolean | null, setIsWithinRange: React.Dispatch<React.SetStateAction<boolean | null>>,
-  isSameStreet: boolean | null, setIsSameStreet: React.Dispatch<React.SetStateAction<boolean | null>>,
-  latitude: string, setLatitude: React.Dispatch<React.SetStateAction<string>>,
-  longitude: string, setLongitude: React.Dispatch<React.SetStateAction<string>>,
-  address: string | null, setAddress: React.Dispatch<React.SetStateAction<string | null>>,
-
-
+  location: string; setLocation: React.Dispatch<React.SetStateAction<string>>;
+  coordinates: any; setCoordinates: React.Dispatch<React.SetStateAction<any>>;
+  lat1: string; setLat1: React.Dispatch<React.SetStateAction<string>>;
+  lon1: string; setLon1: React.Dispatch<React.SetStateAction<string>>;
+  lat2: string; setLat2: React.Dispatch<React.SetStateAction<string>>;
+  lon2: string; setLon2: React.Dispatch<React.SetStateAction<string>>;
+  isWithinRange: boolean | null; setIsWithinRange: React.Dispatch<React.SetStateAction<boolean | null>>;
+  isSameStreet: boolean | null; setIsSameStreet: React.Dispatch<React.SetStateAction<boolean | null>>;
+  latitude: string; setLatitude: React.Dispatch<React.SetStateAction<string>>;
+  longitude: string; setLongitude: React.Dispatch<React.SetStateAction<string>>;
+  address: string | null; setAddress: React.Dispatch<React.SetStateAction<string | null>>;
   error: any; setError: React.Dispatch<React.SetStateAction<any>>;
+  collectionName; setCollectionName;
+  faceUsers; setFaceUsers;
+
   //acValue; setAcValue;
   //taggedMemories; setTaggedMemories;
   //addMemory: (memory: string) => void;
@@ -87,7 +89,8 @@ export const MemoryProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [latitude, setLatitude] = useState<string>('');
   const [longitude, setLongitude] = useState<string>('');
   const [address, setAddress] = useState<string | null>(null);
-
+  const [collectionName, setCollectionName] = useState("");
+  const [faceUsers, setFaceUsers] = useState<any>(null);
   const [error, setError] = useState<any>(null);
   //const [taggedMemories, setTaggedMemories] = useState(null);
   //const [acValue, setAcValue] = useState('');
@@ -134,7 +137,8 @@ export const MemoryProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       latitude, setLatitude,
       longitude, setLongitude,
       address, setAddress,
-      
+      collectionName, setCollectionName,
+      faceUsers, setFaceUsers,
       error, setError,
       //taggedMemories, setTaggedMemories,
       //addMemory,

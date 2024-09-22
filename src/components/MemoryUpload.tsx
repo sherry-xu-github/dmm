@@ -3,6 +3,7 @@ import { useMemoryManage } from "../services/memoryManage";
 import logo from './../assets/MemoryCellar.png';
 import { useMemoryContext } from "../context/MemoryContext";
 import {useRef} from 'react';
+import React from 'react'
 
 export const MemoryUpload = () => {
   const {

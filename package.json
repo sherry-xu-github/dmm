@@ -22,8 +22,11 @@
     "maplibre-gl-js-amplify": "^4.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-image-crop": "^11.0.7",
     "react-router-dom": "^6.26.1",
-    "save": "^2.9.0"
+    "save": "^2.9.0",
+    "sharp": "^0.33.5",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@aws-amplify/backend": "^1.0.4",

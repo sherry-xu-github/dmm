@@ -15,8 +15,6 @@ Amplify.configure({
 });
 
 export default function App() {
-  
-
   return (
     <Authenticator>
     {({ signOut }) => (
@@ -36,6 +34,7 @@ export default function App() {
               <Button variation="link" as={Link} to="/create">Create</Button>
               <Button variation="link" as={Link} to="/gallery">Gallery</Button>
               <Button variation="link" as={Link} to="/search">Search</Button>
+              <Button variation="link" as={Link} to="/faces">Faces</Button>
               <Button onClick={signOut}>Sign Out</Button>
             </Menu>
 

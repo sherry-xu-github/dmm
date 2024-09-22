@@ -12,6 +12,7 @@ import {MemoryUpload} from './components/MemoryUpload';
 import {MemoryGallery} from './components/MemoryGallery';
 //import {MemoryItem} from './components/MemoryItem';
 import {MemorySearch} from './components/MemorySearch';
+import {FaceManagement} from './components/FaceManagement';
 //import EditMemoryPage from './components/EditMemory.tsx';
 
 
@@ -36,6 +37,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <Route path="/create" element={<MemoryUpload />} />
             <Route path="/gallery" element={<MemoryGallery />} />
             <Route path="/search" element={<MemorySearch />} />
+            <Route path="/faces" element={<FaceManagement />} />
           </Route>
         </Routes>
       </Router>
